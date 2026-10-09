@@ -1,0 +1,7 @@
+node_modules/
+dist/
+test-results/
+playwright-report/
+dufs/
+dufs-media-assets-*.zip
+dufs-media-assets-*.zip.sha256

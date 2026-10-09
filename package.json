@@ -1,0 +1,27 @@
+{
+  "name": "dufs-media-assets",
+  "version": "0.1.0",
+  "private": true,
+  "description": "An image and video browser for dufs",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/menzil/dufs-media-assets.git"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test:e2e": "pnpm build && playwright test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "lucide": "^1.52.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^26.6.4",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.3"
+  }
+}
