@@ -2,6 +2,8 @@
 
 Dufs Media is an image and video browser built on the official dufs `--assets` extension point. It replaces the default directory interface without modifying or forking the dufs server.
 
+![Dufs Media demo](https://orhan.cn/images/dufs-media-library.jpeg)
+
 ## Features
 
 - Responsive image and video thumbnails
