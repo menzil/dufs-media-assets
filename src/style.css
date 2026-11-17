@@ -495,13 +495,19 @@ h2 span {
 
 .media-item.is-broken .media-button > img,
 .media-item.is-broken .media-button > video,
-.media-item.is-broken .video-play,
 .media-item.is-broken .video-date {
   display: none;
 }
 
 .media-item.is-broken .media-error {
   display: flex;
+}
+
+.video-item.is-broken .media-error {
+  top: auto;
+  bottom: 16px;
+  padding: 0 8px;
+  font-size: 11px;
 }
 
 .video-button {
@@ -553,7 +559,7 @@ figcaption {
   font-size: 12px;
 }
 
-figcaption span:first-child {
+figcaption > :first-child {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

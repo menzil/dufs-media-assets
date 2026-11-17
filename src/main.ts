@@ -16,6 +16,7 @@ import {
   createElement,
   type IconNode,
 } from "lucide";
+import { createMkvPlayback, type MkvPlayback } from "./mkv-playback";
 import "./style.css";
 
 type PathType = "Dir" | "SymlinkDir" | "File" | "SymlinkFile";
@@ -96,6 +97,7 @@ const IMAGE_EXTENSIONS = new Set([
 
 const VIDEO_EXTENSIONS: ReadonlySet<string> = new Set([
   "m4v",
+  "mkv",
   "mov",
   "mp4",
   "ogv",
@@ -994,6 +996,7 @@ function createVideoViewer(
   error.className = "viewer-media-error";
   error.append(icon(VideoOff, null));
   const errorText = document.createElement("span");
+  errorText.setAttribute("data-testid", "video-error");
   error.append(errorText);
   stage.append(video, error);
 
@@ -1025,8 +1028,13 @@ function createVideoViewer(
   dialog.append(stage, actions, previous, next);
 
   let playback: MediaPlayback | null = null;
+  let mkvPlayback: MkvPlayback | null = null;
+  let mediaReady: Promise<void> = Promise.resolve();
 
   function resetMedia(): void {
+    mkvPlayback?.dispose();
+    mkvPlayback = null;
+    mediaReady = Promise.resolve();
     video.pause();
     video.removeAttribute("src");
     video.load();
@@ -1046,8 +1054,24 @@ function createVideoViewer(
       : `${playback.index + 1} / ${playback.items.length}`;
     download.href = url;
     download.download = item.name;
-    video.src = url;
-    video.load();
+    if (extension(item.name) === "mkv") {
+      const current = createMkvPlayback(video, url, (error: Error) => {
+        if (mkvPlayback === current) {
+          showPlaybackError(error);
+        }
+      });
+      mkvPlayback = current;
+      mediaReady = current.ready;
+      void current.ready.catch((loadError) => {
+        if (mkvPlayback === current && !current.signal.aborted) {
+          current.dispose();
+          showPlaybackError(loadError instanceof Error ? loadError : new Error(String(loadError)));
+        }
+      });
+    } else {
+      video.src = url;
+      video.load();
+    }
   }
 
   function reset(): void {
@@ -1057,17 +1081,27 @@ function createVideoViewer(
     next.hidden = true;
   }
 
+  function showPlaybackError(playError: Error): void {
+    errorText.textContent = `Unable to play ${captionName.textContent ?? "current video"}: ${playError.message}`;
+    dialog.classList.add("has-media-error");
+    console.error("Video playback failed", {
+      fileName: captionName.textContent,
+      error: playError,
+    });
+  }
+
   async function playCurrent(): Promise<void> {
+    const ready = mediaReady;
     try {
+      await ready;
+      if (ready !== mediaReady) {
+        return;
+      }
       await video.play();
     } catch (playError) {
-      const reason = playError instanceof Error ? playError.message : String(playError);
-      errorText.textContent = `Unable to play ${captionName.textContent ?? "current video"}: ${reason}`;
-      dialog.classList.add("has-media-error");
-      console.error("Video playback failed", {
-        fileName: captionName.textContent,
-        reason,
-      });
+      if (ready === mediaReady && (mkvPlayback === null || !mkvPlayback.signal.aborted)) {
+        showPlaybackError(playError instanceof Error ? playError : new Error(String(playError)));
+      }
     }
   }
 
@@ -1167,6 +1201,7 @@ function createVideoItem(item: PathItem, open: (item: PathItem) => void): HTMLEl
 
   const play = document.createElement("span");
   play.className = "video-play";
+  play.setAttribute("data-testid", "video-play-action");
   play.append(icon(CirclePlay, null));
 
   const uploadedAt = document.createElement("time");
@@ -1178,7 +1213,7 @@ function createVideoItem(item: PathItem, open: (item: PathItem) => void): HTMLEl
   const error = document.createElement("span");
   error.className = "media-error";
   error.append(icon(VideoOff, null));
-  const errorText = document.createTextNode("This browser cannot preview the video");
+  const errorText = document.createTextNode("Preview unavailable · Click to try playing");
   error.append(errorText);
 
   video.src = itemUrl(item);
@@ -1193,7 +1228,9 @@ function createVideoItem(item: PathItem, open: (item: PathItem) => void): HTMLEl
   button.append(video, play, uploadedAt, error);
 
   const caption = document.createElement("figcaption");
-  const name = document.createElement("span");
+  const name = document.createElement("a");
+  name.href = itemUrl(item);
+  name.setAttribute("data-testid", "video-file-link");
   name.textContent = item.name;
   const size = document.createElement("span");
   size.textContent = formatSize(item.size);

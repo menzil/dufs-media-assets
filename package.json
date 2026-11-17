@@ -16,7 +16,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "lucide": "^1.52.0"
+    "lucide": "^1.52.0",
+    "mediabunny": "^1.66.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
