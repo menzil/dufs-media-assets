@@ -49,8 +49,8 @@ Build a ZIP whose root contains `index.html`, `favicon.ico`, and the `assets/` d
 
 ```sh
 pnpm build
-(cd dist && zip -r ../dufs-media-assets-v0.1.0.zip .)
-shasum -a 256 dufs-media-assets-v0.1.0.zip > dufs-media-assets-v0.1.0.zip.sha256
+(cd dist && zip -r ../dufs-media-assets-v0.2.0.zip .)
+shasum -a 256 dufs-media-assets-v0.2.0.zip > dufs-media-assets-v0.2.0.zip.sha256
 ```
 
 Attach both files to the matching GitHub Release. Users can extract the archive into a directory and pass that directory to dufs with `--assets`.

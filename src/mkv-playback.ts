@@ -151,6 +151,11 @@ async function streamTrack(
     target: new AppendOnlyStreamTarget(new WritableStream<Uint8Array>({
       async write(data: Uint8Array): Promise<void> {
         signal.throwIfAborted();
+        // A fragment is emitted at the next keyframe, so throttle completed fragments rather than input packets.
+        while (buffer.buffered.length > 0
+          && buffer.buffered.end(buffer.buffered.length - 1) > video.currentTime + BUFFER_AHEAD_SECONDS) {
+          await waitForEvent(video, "timeupdate", signal);
+        }
         const removeBefore = video.currentTime - BUFFER_BEHIND_SECONDS;
         if (buffer.buffered.length > 0 && buffer.buffered.start(0) < removeBefore) {
           const boundary = await track.sink.getKeyPacket(removeBefore);
@@ -170,11 +175,6 @@ async function streamTrack(
     await output.start();
     for await (const packet of track.sink.packets(start)) {
       signal.throwIfAborted();
-      // A fragment is emitted at the next keyframe, so throttle completed fragments rather than input packets.
-      while (buffer.buffered.length > 0
-        && buffer.buffered.end(buffer.buffered.length - 1) > video.currentTime + BUFFER_AHEAD_SECONDS) {
-        await waitForEvent(video, "timeupdate", signal);
-      }
       await addPacket(packet);
     }
     signal.throwIfAborted();
